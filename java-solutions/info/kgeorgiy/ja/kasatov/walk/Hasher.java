@@ -65,4 +65,13 @@ public class Hasher {
             return Map.of(pathString, nullHash);
         }
     }
+
+    public static String hash(String pathString) {
+        try {
+            Path path = Paths.get(pathString);
+            return calculateHash(path);
+        } catch (InvalidPathException e) {
+            return  nullHash;
+        }
+    }
 }
