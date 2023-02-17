@@ -14,39 +14,44 @@ public class RecursiveWalk {
     public static void main(String[] args) {
 
         if (args == null || args.length != 2 || args[0] == null || args[1] == null) {
-            System.out.println("Incorrect arguments");
+            System.out.println("Wrong arguments quantity");
             return;
         }
 
-        try (
-                BufferedReader reader = Files.newBufferedReader(Paths.get(args[0]), StandardCharsets.UTF_8);
-                BufferedWriter writer = Files.newBufferedWriter(Paths.get(args[1]), StandardCharsets.UTF_8)
-        ) {
-            try {
-                String line;
-                while ((line = reader.readLine()) != null) {
+        try {
+            Path inPath = Paths.get(args[0]);
+            Path outPath = Paths.get(args[1]);
+            try (BufferedReader reader = Files.newBufferedReader(inPath, StandardCharsets.UTF_8)) {
+                try (BufferedWriter writer = Files.newBufferedWriter(outPath, StandardCharsets.UTF_8)) {
                     try {
-                        Map<String, String> map = Hasher.hashRecursively(line);
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            try {
+                                Map<String, String> map = Hasher.hashRecursively(line);
 
-                        try {
-                            for (Map.Entry<String, String> entry : map.entrySet()) {
-                                writer.write(String.format("%s %s", entry.getValue(), entry.getKey()));
-                                writer.newLine();
+                                try {
+                                    for (Map.Entry<String, String> entry : map.entrySet()) {
+                                        writer.write(String.format("%s %s", entry.getValue(), entry.getKey()));
+                                        writer.newLine();
+                                    }
+                                } catch (IOException e) {
+                                    System.out.println("Exception occurred while writing to output file: " + e);
+                                }
+                            } catch (InvalidPathException e) {
+                                // wrong file path
                             }
-                        } catch (IOException e) {
-                            System.out.println("Exception occurred while writing to output file: " + e);
                         }
-                    } catch (InvalidPathException e) {
-                        // wrong file path
+                    } catch (IOException e) {
+                        System.out.println("Exception occurred while reading input file: " + e);
                     }
+                } catch (IOException | SecurityException | InvalidPathException e) {
+                    System.out.println("Can't open output file: " + e);
                 }
-
-            } catch (IOException e) {
-                System.out.println("Exception occurred while reading input file: " + e);
+            } catch (IOException | SecurityException | InvalidPathException e) {
+                System.out.println("Can't open input file: " + e);
             }
-
-        } catch (IOException | SecurityException | InvalidPathException e) {
-            System.out.println("Cant open input/output file: " + e);
+        } catch (InvalidPathException e) {
+            System.out.println("Wrong arguments: " + e);
         }
     }
 }
