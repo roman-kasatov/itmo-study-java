@@ -44,9 +44,18 @@ public class Hasher {
 
     public static Map<String, String> hashRecursively(Path path) {
         try (Stream<Path> pathStream = Files.walk(path)) {
+
             return pathStream
-            //        .filter(Objects::nonNull)
-                    .filter(f -> !Files.isDirectory(f))
+                    .filter(f -> {
+                        if (f == null) {
+                            return false;
+                        }
+                        try {
+                            return !Files.isDirectory(f);
+                        } catch (SecurityException e) {
+                            return false;
+                        }
+                    })
                     .collect(Collectors.toMap(Path::toString, Hasher::calculateHash));
         } catch (IOException | SecurityException e) {
             // File on 'path' is unreachable
