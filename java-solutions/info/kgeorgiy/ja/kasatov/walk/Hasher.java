@@ -44,7 +44,6 @@ public class Hasher {
 
     public static Map<String, String> hashRecursively(Path path) {
         try (Stream<Path> pathStream = Files.walk(path)) {
-
             return pathStream
                     .filter(f -> {
                         if (f == null) {
@@ -59,7 +58,7 @@ public class Hasher {
                     .collect(Collectors.toMap(Path::toString, Hasher::calculateHash));
         } catch (IOException | SecurityException e) {
             // File on 'path' is unreachable
-            return new HashMap<>();
+            return Map.of(path.toString(), nullHash);
         }
     }
 }
