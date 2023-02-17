@@ -26,9 +26,7 @@ public class RecursiveWalk {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     try {
-                        Path path = Paths.get(line);
-
-                        Map<String, String> map = Hasher.hashRecursively(path);
+                        Map<String, String> map = Hasher.hashRecursively(line);
 
                         try {
                             for (Map.Entry<String, String> entry : map.entrySet()) {

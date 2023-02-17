@@ -2,7 +2,9 @@ package info.kgeorgiy.ja.kasatov.walk;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -11,7 +13,9 @@ import java.util.stream.Stream;
 
 
 public class Hasher {
-    final static String nullHash = "0".repeat(40);
+    final private static int HASH_SIZE = 64;
+
+    final private static String nullHash = "0".repeat(HASH_SIZE);
 
     public static String calculateHash(Path path) {
         try {
@@ -42,8 +46,8 @@ public class Hasher {
         }
     }
 
-    public static Map<String, String> hashRecursively(Path path) {
-        try (Stream<Path> pathStream = Files.walk(path)) {
+    public static Map<String, String> hashRecursively(String pathString) {
+        try (Stream<Path> pathStream = Files.walk(Paths.get(pathString))) {
             return pathStream
                     .filter(f -> {
                         if (f == null) {
@@ -56,9 +60,9 @@ public class Hasher {
                         }
                     })
                     .collect(Collectors.toMap(Path::toString, Hasher::calculateHash));
-        } catch (IOException | SecurityException e) {
+        } catch (InvalidPathException | IOException | SecurityException e) {
             // File on 'path' is unreachable
-            return Map.of(path.toString(), nullHash);
+            return Map.of(pathString, nullHash);
         }
     }
 }
