@@ -30,11 +30,12 @@ public class Hasher {
                 } catch (IOException e) {
                     return nullHash;
                 }
-            } catch (IOException e) {
+            } catch (IOException | IllegalArgumentException | UnsupportedOperationException |
+                     SecurityException e) {
                 return nullHash;
             }
 
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException | NullPointerException e) {
             // Every implementation of the Java platform is required to support
             // the following standard MessageDigest algorithms... (SHA-256 among them)
             return nullHash;
@@ -44,9 +45,10 @@ public class Hasher {
     public static Map<String, String> hashRecursively(Path path) {
         try (Stream<Path> pathStream = Files.walk(path)) {
             return pathStream
+            //        .filter(Objects::nonNull)
                     .filter(f -> !Files.isDirectory(f))
                     .collect(Collectors.toMap(Path::toString, Hasher::calculateHash));
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             // File on 'path' is unreachable
             return new HashMap<>();
         }
