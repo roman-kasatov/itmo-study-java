@@ -18,35 +18,47 @@ public class RecursiveWalk {
             return;
         }
 
-        try (
-                BufferedReader reader = Files.newBufferedReader(Paths.get(args[0]), StandardCharsets.UTF_8);
-                BufferedWriter writer = Files.newBufferedWriter(Paths.get(args[1]), StandardCharsets.UTF_8)
-        ) {
-            try {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    try {
-                        Map<String, String> map = Hasher.hashRecursively(line);
-
-                        try {
-                            for (Map.Entry<String, String> entry : map.entrySet()) {
-                                writer.write(String.format("%s %s", entry.getValue(), entry.getKey()));
-                                writer.newLine();
-                            }
-                        } catch (IOException e) {
-                            System.out.println("Exception occurred while writing to output file: " + e);
-                        }
-                    } catch (InvalidPathException e) {
-                        // wrong file path
-                    }
-                }
-
-            } catch (IOException e) {
-                System.out.println("Exception occurred while reading input file: " + e);
+        try {
+            Path inPath = Paths.get(args[0]);
+            Path outPath = Paths.get(args[1]);
+            if (outPath.getParent() != null) {
+                Files.createDirectories(outPath.getParent());
             }
 
-        } catch (IOException | SecurityException | InvalidPathException e) {
-            System.out.println("Cant open input/output file: " + e);
+            try (
+                    BufferedReader reader = Files.newBufferedReader(inPath, StandardCharsets.UTF_8);
+                    BufferedWriter writer = Files.newBufferedWriter(Paths.get(args[1]), StandardCharsets.UTF_8)
+            ) {
+                try {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        try {
+                            Map<String, String> map = Hasher.hashRecursively(line);
+
+                            try {
+                                for (Map.Entry<String, String> entry : map.entrySet()) {
+                                    writer.write(String.format("%s %s", entry.getValue(), entry.getKey()));
+                                    writer.newLine();
+                                }
+                            } catch (IOException e) {
+                                System.out.println("Exception occurred while writing to output file: " + e);
+                            }
+                        } catch (InvalidPathException e) {
+                            // wrong file path
+                        }
+                    }
+
+                } catch (IOException e) {
+                    System.out.println("Exception occurred while reading input file: " + e);
+                }
+
+            } catch (IOException | SecurityException | InvalidPathException e) {
+                System.out.println("Cant open input/output file: " + e);
+            }
+        } catch (InvalidPathException e) {
+            System.out.println("Wrong argument: " + e);
+        } catch (UnsupportedOperationException | IOException | SecurityException e) {
+            System.out.println("Can't access or create output file directory: " + e);
         }
     }
 }
