@@ -13,15 +13,16 @@ import java.util.stream.Stream;
 
 
 public class Hasher {
+    // :NOTE: хардкод количества байтов в хэше
     final private static int HASH_SIZE = 64;
 
     final private static String nullHash = "0".repeat(HASH_SIZE);
 
     public static String calculateHash(Path path) {
         try {
+            // :NOTE: MessageDigest на каждый файл
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             try (InputStream reader = Files.newInputStream(path)) {
-                try {
                     int read;
                     byte[] buffer = new byte[1 << 16];
                     while ((read = reader.read(buffer)) >= 0) {
@@ -31,15 +32,12 @@ public class Hasher {
                     // JDK17
                     return HexFormat.of().formatHex(md.digest());
 
-                } catch (IOException e) {
-                    return nullHash;
-                }
             } catch (IOException | IllegalArgumentException | UnsupportedOperationException |
                      SecurityException e) {
                 return nullHash;
             }
 
-        } catch (NoSuchAlgorithmException | NullPointerException e) {
+        } catch (NoSuchAlgorithmException e) {
             // Every implementation of the Java platform is required to support
             // the following standard MessageDigest algorithms... (SHA-256 among them)
             return nullHash;
@@ -50,9 +48,6 @@ public class Hasher {
         try (Stream<Path> pathStream = Files.walk(Paths.get(pathString))) {
             return pathStream
                     .filter(f -> {
-                        if (f == null) {
-                            return false;
-                        }
                         try {
                             return !Files.isDirectory(f);
                         } catch (SecurityException e) {

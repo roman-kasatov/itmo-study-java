@@ -27,7 +27,7 @@ public class RecursiveWalk {
 
             try (
                     BufferedReader reader = Files.newBufferedReader(inPath, StandardCharsets.UTF_8);
-                    BufferedWriter writer = Files.newBufferedWriter(Paths.get(args[1]), StandardCharsets.UTF_8)
+                    BufferedWriter writer = Files.newBufferedWriter(outPath, StandardCharsets.UTF_8)
             ) {
                 try {
                     String line;
@@ -53,11 +53,13 @@ public class RecursiveWalk {
                 }
 
             } catch (IOException | SecurityException | InvalidPathException e) {
+                // :NOTE: разделить инпут/аутпут и разные ошибки
                 System.out.println("Cant open input/output file: " + e);
             }
         } catch (InvalidPathException e) {
             System.out.println("Wrong argument: " + e);
         } catch (UnsupportedOperationException | IOException | SecurityException e) {
+            // :NOTE: 3 ошибки в одной
             System.out.println("Can't access or create output file directory: " + e);
         }
     }
