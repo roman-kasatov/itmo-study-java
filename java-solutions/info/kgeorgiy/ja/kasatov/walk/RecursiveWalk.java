@@ -1,66 +1,18 @@
 package info.kgeorgiy.ja.kasatov.walk;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 
 public class RecursiveWalk {
 
     public static void main(String[] args) {
-
-        if (args == null || args.length != 2 || args[0] == null || args[1] == null) {
-            System.out.println("Incorrect arguments");
-            return;
-        }
-
-        try {
-            Path inPath = Paths.get(args[0]);
-            Path outPath = Paths.get(args[1]);
-            if (outPath.getParent() != null) {
-                Files.createDirectories(outPath.getParent());
-            }
-
-            try (
-                    BufferedReader reader = Files.newBufferedReader(inPath, StandardCharsets.UTF_8);
-                    BufferedWriter writer = Files.newBufferedWriter(outPath, StandardCharsets.UTF_8)
-            ) {
-                try {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        try {
-                            Map<String, String> map = Hasher.hashRecursively(line);
-
-                            try {
-                                for (Map.Entry<String, String> entry : map.entrySet()) {
-                                    writer.write(String.format("%s %s", entry.getValue(), entry.getKey()));
-                                    writer.newLine();
-                                }
-                            } catch (IOException e) {
-                                System.out.println("Exception occurred while writing to output file: " + e);
-                            }
-                        } catch (InvalidPathException e) {
-                            // wrong file path
-                        }
-                    }
-
-                } catch (IOException e) {
-                    System.out.println("Exception occurred while reading input file: " + e);
+        try (TaskSolver solver = new TaskSolver(args, Hasher.HashAlgorithms.SHA256)) {
+            for (String request : solver) {
+                Map<String, String> hashes = solver.getHasher().hashRecursively(request);
+                for (Map.Entry<String, String> entry : hashes.entrySet()) {
+                    solver.writeAnswer(String.format("%s %s", entry.getValue(), entry.getKey()));
                 }
-
-            } catch (IOException | SecurityException | InvalidPathException e) {
-                // :NOTE: разделить инпут/аутпут и разные ошибки
-                System.out.println("Cant open input/output file: " + e);
             }
-        } catch (InvalidPathException e) {
-            System.out.println("Wrong argument: " + e);
-        } catch (UnsupportedOperationException | IOException | SecurityException e) {
-            // :NOTE: 3 ошибки в одной
-            System.out.println("Can't access or create output file directory: " + e);
         }
     }
 }

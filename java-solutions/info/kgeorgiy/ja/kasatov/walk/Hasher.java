@@ -13,38 +13,43 @@ import java.util.stream.Stream;
 
 
 public class Hasher {
-    // :NOTE: хардкод количества байтов в хэше
-    final private static int HASH_SIZE = 64;
+    private final static int HEX_IN_BYTE = 2;
 
-    final private static String nullHash = "0".repeat(HASH_SIZE);
+    public static class HashAlgorithms {
+        public static final String SHA256 = "SHA-256";
+    }
 
-    public static String calculateHash(Path path) {
-        try {
-            // :NOTE: MessageDigest на каждый файл
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            try (InputStream reader = Files.newInputStream(path)) {
-                    int read;
-                    byte[] buffer = new byte[1 << 16];
-                    while ((read = reader.read(buffer)) >= 0) {
-                        md.update(buffer, 0, read);
-                    }
+    // :NOTE: хардкод количества байтов в хэше DONE
 
-                    // JDK17
-                    return HexFormat.of().formatHex(md.digest());
+    private final MessageDigest messageDigest;
+    private final String nullHash;
 
-            } catch (IOException | IllegalArgumentException | UnsupportedOperationException |
-                     SecurityException e) {
-                return nullHash;
-            }
+    public Hasher(String algorithm) throws NoSuchAlgorithmException {
+        messageDigest = MessageDigest.getInstance(algorithm);
+        nullHash = "0".repeat(messageDigest.getDigestLength() * HEX_IN_BYTE);
+    }
 
-        } catch (NoSuchAlgorithmException e) {
-            // Every implementation of the Java platform is required to support
-            // the following standard MessageDigest algorithms... (SHA-256 among them)
+    public String calculateHash(Path path) {
+        // :NOTE: MessageDigest на каждый файл DONE
+
+        messageDigest.reset(); // does nothing
+        try (InputStream reader = Files.newInputStream(path)) {
+                int read;
+                byte[] buffer = new byte[1 << 16];
+                while ((read = reader.read(buffer)) >= 0) {
+                    messageDigest.update(buffer, 0, read);
+                }
+
+                // JDK17
+                return HexFormat.of().formatHex(messageDigest.digest());
+
+        } catch (IOException | IllegalArgumentException | UnsupportedOperationException |
+                 SecurityException e) {
             return nullHash;
         }
     }
 
-    public static Map<String, String> hashRecursively(String pathString) {
+    public Map<String, String> hashRecursively(String pathString) {
         try (Stream<Path> pathStream = Files.walk(Paths.get(pathString))) {
             return pathStream
                     .filter(f -> {
@@ -54,14 +59,14 @@ public class Hasher {
                             return false;
                         }
                     })
-                    .collect(Collectors.toMap(Path::toString, Hasher::calculateHash));
+                    .collect(Collectors.toMap(Path::toString, this::calculateHash));
         } catch (InvalidPathException | IOException | SecurityException e) {
             // File on 'path' is unreachable
             return Map.of(pathString, nullHash);
         }
     }
 
-    public static String hash(String pathString) {
+    public String hash(String pathString) {
         try {
             Path path = Paths.get(pathString);
             return calculateHash(path);
