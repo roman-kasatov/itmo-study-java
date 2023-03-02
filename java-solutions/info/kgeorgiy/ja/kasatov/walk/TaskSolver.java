@@ -123,19 +123,20 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
         public boolean hasNext() {
             if (stopFlag) {
                 return false;
+            } else if (savedNextLine == null) {
+                savedNextLine = readNextLine();
             }
-            savedNextLine = readNextLine();
             return !(savedNextLine == null);
         }
 
         @Override
         public String next() {
-            if (savedNextLine == null) {
-                return readNextLine();
-            } else {
+            if (hasNext()) {
                 String ret = savedNextLine;
                 savedNextLine = null;
                 return ret;
+            } else {
+                return null;
             }
         }
     }
