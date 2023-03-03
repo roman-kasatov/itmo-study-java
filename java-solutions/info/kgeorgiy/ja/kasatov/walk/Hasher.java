@@ -16,11 +16,17 @@ public class Hasher {
     private final static int HEX_IN_BYTE = 2;
 
     // :NOTE: enum? DONE
-    enum HashAlgorithms {
-        SHA256 {
-            public String toString() {
-                return "SHA-256";
-            }
+    public enum HashAlgorithms {
+        SHA256("SHA-256");
+
+        private final String string;
+
+        HashAlgorithms(String string){
+            this.string = string;
+        }
+
+        public String toString() {
+            return this.string;
         }
     }
 
@@ -36,14 +42,14 @@ public class Hasher {
     public String calculateHash(Path path) {
         messageDigest.reset(); // does nothing
         try (InputStream reader = Files.newInputStream(path)) {
-                int read;
-                byte[] buffer = new byte[1 << 16];
-                while ((read = reader.read(buffer)) >= 0) {
-                    messageDigest.update(buffer, 0, read);
-                }
+            int read;
+            byte[] buffer = new byte[1 << 16];
+            while ((read = reader.read(buffer)) >= 0) {
+                messageDigest.update(buffer, 0, read);
+            }
 
-                // JDK17
-                return HexFormat.of().formatHex(messageDigest.digest());
+            // JDK17
+            return HexFormat.of().formatHex(messageDigest.digest());
 
         } catch (IOException | IllegalArgumentException | UnsupportedOperationException |
                  SecurityException e) {
