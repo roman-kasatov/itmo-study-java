@@ -162,10 +162,6 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
         private void start() {
             stopFlag = false;
         }
-
-        private void stop() {
-            stopFlag = true;
-        }
         // setStopFlag() DONE
     }
 
