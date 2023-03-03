@@ -77,6 +77,7 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
             } catch (SecurityException e) {
                 System.out.println("Has no rights to create output file: " + e);
             }
+            // :NOTE: можно просто в каждом catch сделать return
             if (!outDirectoryFlag) return;
         }
 

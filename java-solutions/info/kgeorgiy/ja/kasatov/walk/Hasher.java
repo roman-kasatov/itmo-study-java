@@ -19,14 +19,14 @@ public class Hasher {
     public enum HashAlgorithms {
         SHA256("SHA-256");
 
-        private final String string;
+        private final String name;
 
-        HashAlgorithms(String string){
-            this.string = string;
+        HashAlgorithms(String name){
+            this.name = name;
         }
 
-        public String toString() {
-            return this.string;
+        public String getName() {
+            return this.name;
         }
     }
 
