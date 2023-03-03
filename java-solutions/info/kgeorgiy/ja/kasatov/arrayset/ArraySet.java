@@ -4,29 +4,37 @@ import java.util.*;
 
 public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
 
-    private final ArrayList<T> arrayList;
+    private final List<T> arrayList;
     private final Comparator<? super T> comparator;
     private final boolean naturalOrder;
 
 
     public ArraySet() {
-        this(null, null, true);
+        this(null, null, InitType.ORDINARY);
     }
 
     public ArraySet(Collection<? extends T> collection) {
-        this(collection, null, false);
+        this(collection, null, InitType.ORDINARY);
 
     }
 
     public ArraySet(Collection<? extends T> collection, Comparator<? super T> comparator) {
-        this(collection, comparator, false);
+        this(collection, comparator, InitType.ORDINARY);
     }
 
+    @SuppressWarnings("unchecked")
     private Comparator<T> makeComparator() {
         return (o1, o2) -> ((Comparable<T>) o1).compareTo(o2);
     }
 
-    private ArraySet(Collection<? extends T> collection, Comparator<? super T> comparator, boolean sorted) {
+    enum InitType {
+        ORDINARY,
+        FROM_SUBSET,
+        FROM_SORTED,
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArraySet(Collection<? extends T> collection, Comparator<? super T> comparator, InitType initType) {
         if (comparator == null) {
             naturalOrder = true;
             this.comparator = makeComparator();
@@ -36,13 +44,19 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
         }
 
         if (collection == null) {
-            collection = Collections.emptyList();
-        } else if (!sorted) {
-            TreeSet<T> treeSet = new TreeSet<>(comparator);
-            treeSet.addAll(collection);
-            collection = treeSet;
+            arrayList = Collections.emptyList();
+        } else {
+            if (initType == InitType.FROM_SUBSET) {
+                arrayList = (List<T>) collection;
+            } else {
+                if (initType == InitType.ORDINARY) {
+                    TreeSet<T> treeSet = new TreeSet<>(comparator);
+                    treeSet.addAll(collection);
+                    collection = treeSet;
+                } // else: Collection is already sorted
+                arrayList = new ArrayList<>(collection);
+            }
         }
-        arrayList = new ArrayList<>(collection);
     }
 
     public int getIndex(T t, boolean least, boolean inclusive) {
@@ -109,6 +123,7 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean contains(Object o) {
         T element = (T)  Objects.requireNonNull(o);
         int index = getIndex(element, false, true);
@@ -167,7 +182,7 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
 
     @Override
     public NavigableSet<T> descendingSet() {
-        return new ArraySet<T>(arrayList, comparator.reversed());
+        return new ArraySet<>(arrayList, comparator.reversed());
     }
 
     @Override
@@ -205,9 +220,9 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
 
     private ArraySet<T> subSetByRange(int start, int end) {
         if (end < start) {
-            return new ArraySet<T>(null, comparator(), true);
+            return new ArraySet<>(null, comparator(), InitType.ORDINARY);
         }
-        return new ArraySet<>(arrayList.subList(start, end), comparator(), true);
+        return new ArraySet<>(arrayList.subList(start, end), comparator(), InitType.FROM_SUBSET);
     }
 
     @Override
