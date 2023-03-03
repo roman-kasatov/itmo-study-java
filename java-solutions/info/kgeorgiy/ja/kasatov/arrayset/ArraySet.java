@@ -15,6 +15,7 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
 
     public ArraySet(Collection<? extends T> collection) {
         this(collection, null, false);
+
     }
 
     public ArraySet(Collection<? extends T> collection, Comparator<? super T> comparator) {
@@ -116,7 +117,7 @@ public class ArraySet<T> extends AbstractSet<T> implements NavigableSet<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return arrayList.iterator();
+        return Collections.unmodifiableList(arrayList).iterator();
     }
 
     @Override
