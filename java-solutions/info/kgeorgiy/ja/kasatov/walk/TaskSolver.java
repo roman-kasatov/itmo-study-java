@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 
 public class TaskSolver implements AutoCloseable, Iterable<String> {
@@ -154,7 +155,7 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
                 savedNextLine = null;
                 return ret;
             } else {
-                return null;
+                throw new NoSuchElementException();
             }
         }
 
