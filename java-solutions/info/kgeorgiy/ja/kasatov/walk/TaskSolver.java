@@ -44,48 +44,64 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
             return;
         }
 
-        // :NOTE: большая вложенность
+        // :NOTE: большая вложенность DONE
+
+        Path inPath, outPath;
         try {
-            Path inPath = Paths.get(args[0]);
-            try {
-                Path outPath = Paths.get(args[1]);
-                try {
-                    if (outPath.getParent() != null) {
-                        Files.createDirectories(outPath.getParent());
-                    }
-                    try {
-                        reader = Files.newBufferedReader(inPath, StandardCharsets.UTF_8);
-                        try {
-                            writer = Files.newBufferedWriter(outPath, StandardCharsets.UTF_8);
-                            iterator.stopFlag = false; // OK
-                        } catch (IOException e) {
-                            System.out.println("Can't open output file: " + e);
-                        } catch (SecurityException e) {
-                            System.out.println("Has no rights to open output file: " + e);
-                        }
-                    } catch (IOException e) {
-                        System.out.println("Can't open input file: " + e);
-                    } catch (SecurityException e) {
-                        System.out.println("Has no rights to open input file: " + e);
-                    }
-
-
-                } catch (UnsupportedOperationException e) {
-                    // Impossible exception while createDirectories() has no attributes
-                } catch (FileAlreadyExistsException e) {
-                    System.out.println("Output file can't be created because its path contains " +
-                            "non-folder files: " + e);
-                } catch (IOException e) {
-                    System.out.println("Can't create output file: " + e);
-                } catch (SecurityException e) {
-                    System.out.println("Has no rights to create output file: " + e);
-                }
-            } catch (InvalidPathException e) {
-                System.out.println("Can't parse output file path: " + e);
-            }
+            inPath = Paths.get(args[0]);
         } catch (InvalidPathException e) {
             System.out.println("Can't parse input file path: " + e);
+            return;
         }
+        try {
+            outPath = Paths.get(args[1]);
+        } catch (InvalidPathException e) {
+            System.out.println("Can't parse output file path: " + e);
+            return;
+        }
+
+        // Make directory for output file
+        if (outPath.getParent() != null) {
+            boolean outDirectoryFlag = false;
+            try {
+                Files.createDirectories(outPath.getParent());
+                outDirectoryFlag = true;
+            } catch (UnsupportedOperationException e) {
+                // Impossible exception while createDirectories() has no attributes
+            } catch (FileAlreadyExistsException e) {
+                System.out.println("Output file can't be created because its path contains " +
+                        "non-folder files: " + e);
+            } catch (IOException e) {
+                System.out.println("Can't create output file: " + e);
+            } catch (SecurityException e) {
+                System.out.println("Has no rights to create output file: " + e);
+            }
+            if (!outDirectoryFlag) return;
+        }
+
+        // get reader and writer
+        boolean readerFlag = false, writerFlag = false;
+        try {
+            reader = Files.newBufferedReader(inPath, StandardCharsets.UTF_8);
+            readerFlag = true;
+        } catch (IOException e) {
+            System.out.println("Can't open input file: " + e);
+        } catch (SecurityException e) {
+            System.out.println("Has no rights to open input file: " + e);
+        }
+        try {
+            writer = Files.newBufferedWriter(outPath, StandardCharsets.UTF_8);
+            writerFlag = true;
+        } catch (IOException e) {
+            System.out.println("Can't open output file: " + e);
+        } catch (SecurityException e) {
+            System.out.println("Has no rights to open output file: " + e);
+        }
+        if (!readerFlag || !writerFlag) {
+            return;
+        }
+
+        iterator.start(); // OK
     }
 
     @Override
@@ -142,8 +158,14 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
             }
         }
 
+        private void start() {
+            stopFlag = false;
+        }
 
-        // setStopFlag();
+        private void stop() {
+            stopFlag = true;
+        }
+        // setStopFlag() DONE
     }
 
     @Override

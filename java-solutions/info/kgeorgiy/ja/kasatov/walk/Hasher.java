@@ -15,9 +15,13 @@ import java.util.stream.Stream;
 public class Hasher {
     private final static int HEX_IN_BYTE = 2;
 
-    // :NOTE: enum?
-    public static class HashAlgorithms {
-        public static final String SHA256 = "SHA-256";
+    // :NOTE: enum? DONE
+    enum HashAlgorithms {
+        SHA256 {
+            public String toString() {
+                return "SHA-256";
+            }
+        }
     }
 
 
