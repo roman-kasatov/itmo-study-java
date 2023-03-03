@@ -14,7 +14,6 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
     private BufferedReader reader;
     private BufferedWriter writer;
     private Hasher hasher;
-    private String savedNextLine;
     private final TaskSolverIterator iterator;
 
     public Hasher getHasher() {
@@ -45,6 +44,7 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
             return;
         }
 
+        // :NOTE: большая вложенность
         try {
             Path inPath = Paths.get(args[0]);
             try {
@@ -118,6 +118,7 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
 
     private class TaskSolverIterator implements Iterator<String> {
         private boolean stopFlag = true;
+        private String savedNextLine;
 
         @Override
         public boolean hasNext() {
@@ -129,6 +130,7 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
             return !(savedNextLine == null);
         }
 
+        // :NOTE: NoSuchElementException
         @Override
         public String next() {
             if (hasNext()) {
@@ -139,6 +141,9 @@ public class TaskSolver implements AutoCloseable, Iterable<String> {
                 return null;
             }
         }
+
+
+        // setStopFlag();
     }
 
     @Override

@@ -15,11 +15,11 @@ import java.util.stream.Stream;
 public class Hasher {
     private final static int HEX_IN_BYTE = 2;
 
+    // :NOTE: enum?
     public static class HashAlgorithms {
         public static final String SHA256 = "SHA-256";
     }
 
-    // :NOTE: хардкод количества байтов в хэше DONE
 
     private final MessageDigest messageDigest;
     private final String nullHash;
@@ -30,8 +30,6 @@ public class Hasher {
     }
 
     public String calculateHash(Path path) {
-        // :NOTE: MessageDigest на каждый файл DONE
-
         messageDigest.reset(); // does nothing
         try (InputStream reader = Files.newInputStream(path)) {
                 int read;
