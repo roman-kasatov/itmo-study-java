@@ -49,14 +49,14 @@ public class StudentDB implements GroupQuery {
      * Returns name of group with maximum metric. If there is more than one such group, returns
      * with maximum name if (maxName) and with minimum otherwise
      */
-    private GroupName getMaxGroup(Collection<Student> students, Function<List<Student>, Integer> metric, boolean maxName) {
+    private <T extends Comparable<T>> GroupName getMaxGroup(Collection<Student> students, Function<List<Student>, T> metric, boolean maxName) {
         return students.stream()
                 .collect(Collectors.groupingBy(Student::getGroup))
                 .entrySet().stream()
                 .map(s -> Map.entry(s.getKey(), metric.apply(s.getValue())))
-                .max(Comparator.comparing(Map.Entry<GroupName, Integer>::getValue)
+                .max(Comparator.comparing(Map.Entry<GroupName, T>::getValue)
                         .thenComparing(
-                                Map.Entry<GroupName, Integer>::getKey,
+                                Map.Entry<GroupName, T>::getKey,
                                 maxName ? Comparator.naturalOrder() : Comparator.reverseOrder()))
                 .map(Map.Entry::getKey)
                 .orElse(null);
@@ -71,7 +71,7 @@ public class StudentDB implements GroupQuery {
     public GroupName getLargestGroupFirstName(Collection<Student> students) {
         return getMaxGroup(
                 students,
-                l -> (int) l.stream()
+                l -> l.stream()
                         .map(Student::getFirstName)
                         .distinct()
                         .count(),
