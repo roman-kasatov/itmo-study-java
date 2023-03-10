@@ -18,7 +18,9 @@ public class StudentDB implements GroupQuery {
             .reversed()
             .thenComparing(Student::getId);
 
-    /** Returns groups ordered by name with students ordered by comparator */
+    /**
+     * Returns groups ordered by name with students ordered by comparator
+     */
     private List<Group> aggregateByGroup(Collection<Student> students, Comparator<Student> comparator) {
         return students.stream()
                 .collect(Collectors.groupingBy(Student::getGroup))
@@ -43,8 +45,10 @@ public class StudentDB implements GroupQuery {
         return aggregateByGroup(students, Comparator.comparing(Student::getId));
     }
 
-    /** Returns name of group with maximum metric. If there is more than one such group, returns
-     * with maximum name if (maxName) and with minimum otherwise */
+    /**
+     * Returns name of group with maximum metric. If there is more than one such group, returns
+     * with maximum name if (maxName) and with minimum otherwise
+     */
     private GroupName getMaxGroup(Collection<Student> students, Function<List<Student>, Integer> metric, boolean maxName) {
         return students.stream()
                 .collect(Collectors.groupingBy(Student::getGroup))
@@ -53,7 +57,7 @@ public class StudentDB implements GroupQuery {
                 .max(Comparator.comparing(Map.Entry<GroupName, Integer>::getValue)
                         .thenComparing(
                                 Map.Entry<GroupName, Integer>::getKey,
-                                maxName? Comparator.naturalOrder() : Comparator.reverseOrder()))
+                                maxName ? Comparator.naturalOrder() : Comparator.reverseOrder()))
                 .map(Map.Entry::getKey)
                 .orElse(null);
     }
@@ -129,9 +133,11 @@ public class StudentDB implements GroupQuery {
         return sortStudents(students, nameComparator);
     }
 
-    /** Returns list of students for which function(student) == target */
+    /**
+     * Returns list of students for which function(student) == target
+     */
     private <T> List<Student> filterStudents(Collection<Student> students,
-                                         Function<Student, T> function, T target) {
+                                             Function<Student, T> function, T target) {
         return students.stream()
                 .filter(s -> function.apply(s).equals(target))
                 .sorted(nameComparator)
