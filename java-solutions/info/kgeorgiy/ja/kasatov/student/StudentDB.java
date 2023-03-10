@@ -95,7 +95,7 @@ public class StudentDB implements GroupQuery {
 
     @Override
     public List<String> getFullNames(List<Student> students) {
-        return mapStudentsToList(students, s -> s.getFirstName() + " " + s.getLastName());
+        return mapStudentsToList(students, s -> String.join(" ", s.getFirstName(), s.getLastName()));
     }
 
     @Override
@@ -163,7 +163,7 @@ public class StudentDB implements GroupQuery {
                         s.getKey(),
                         s.getValue().stream()
                                 .map(Student::getFirstName)
-                                .min(Comparator.naturalOrder()).get()))
+                                .min(Comparator.naturalOrder()).orElse("")))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> x, HashMap::new));
     }
 }
