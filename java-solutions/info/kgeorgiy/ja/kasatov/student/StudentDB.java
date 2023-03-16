@@ -50,9 +50,9 @@ public class StudentDB implements GroupQuery {
      * Returns name of group with maximum metric. If there is more than one such group, returns
      * with maximum name if (maxName) and with minimum otherwise
      */
-    private GroupName getMaxGroup(
+    private <T extends Comparable<? super T>> GroupName getMaxGroup(
             final Collection<Student> students,
-            final Collector<Student, ?, Integer> metric,
+            final Collector<Student, ?, T> metric,
             final Comparator<GroupName> groupComparator
     ) {
         return students.stream()
@@ -60,7 +60,7 @@ public class StudentDB implements GroupQuery {
                         Student::getGroup,
                         metric))
                 .entrySet().stream()
-                .max(Map.Entry.<GroupName, Integer>comparingByValue()
+                .max(Map.Entry.<GroupName, T>comparingByValue()
                         .thenComparing(Map.Entry.comparingByKey(groupComparator)))
                 .map(Map.Entry::getKey)
                 .orElse(null);
@@ -82,7 +82,7 @@ public class StudentDB implements GroupQuery {
                         Student::getFirstName,
                         Collectors.collectingAndThen(
                                 Collectors.toSet(),
-                                Set::size
+                                Set<String>::size
                         )),
                 Comparator.reverseOrder());
     }
