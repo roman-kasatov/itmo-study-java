@@ -178,14 +178,11 @@ public class StudentDB implements GroupQuery {
                 .filter(s -> s.getGroup().equals(group))
                 .collect(Collectors.groupingBy(Student::getLastName))
                 .entrySet().stream()
-                // :NOTE: ??
-                .map(s -> Map.entry(
-                        s.getKey(),
-                        s.getValue().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream()
                                 .map(Student::getFirstName)
                                 .min(Comparator.naturalOrder())
-                                .orElse("")
-                ))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> x));
+                                .orElse("")));
     }
 }
