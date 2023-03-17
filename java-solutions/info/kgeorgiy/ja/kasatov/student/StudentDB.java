@@ -28,9 +28,9 @@ public class StudentDB implements GroupQuery {
                 .entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(
-                        s -> new Group(
-                                s.getKey(),
-                                s.getValue().stream()
+                        entry -> new Group(
+                                entry.getKey(),
+                                entry.getValue().stream()
                                         .sorted(comparator)
                                         .collect(Collectors.toCollection(ArrayList::new))))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -58,7 +58,8 @@ public class StudentDB implements GroupQuery {
         return students.stream()
                 .collect(Collectors.groupingBy(
                         Student::getGroup,
-                        metric))
+                        metric
+                ))
                 .entrySet().stream()
                 .max(Map.Entry.<GroupName, T>comparingByValue()
                         .thenComparing(Map.Entry.comparingByKey(groupComparator)))
@@ -71,7 +72,8 @@ public class StudentDB implements GroupQuery {
         return getMaxGroup(
                 students,
                 Collectors.collectingAndThen(Collectors.counting(), Long::intValue),
-                Comparator.naturalOrder());
+                Comparator.naturalOrder()
+        );
     }
 
     @Override
@@ -80,11 +82,10 @@ public class StudentDB implements GroupQuery {
                 students,
                 Collectors.mapping(
                         Student::getFirstName,
-                        Collectors.collectingAndThen(
-                                Collectors.toSet(),
-                                Set<String>::size
-                        )),
-                Comparator.reverseOrder());
+                        Collectors.collectingAndThen(Collectors.toSet(), Set<String>::size)
+                ),
+                Comparator.reverseOrder()
+        );
     }
 
     private <T> List<T> mapStudentsToList(final List<Student> list, final Function<Student, T> function) {
@@ -146,9 +147,10 @@ public class StudentDB implements GroupQuery {
     /**
      * Returns list of students for which function(student) == target
      */
-    private <T> List<Student> filterStudents(
+    private static <T> List<Student> filterStudents(
             final Collection<Student> students,
-            final Function<Student, T> function, final T target) {
+            final Function<Student, T> function, final T target
+    ) {
         return students.stream()
                 .filter(s -> function.apply(s).equals(target))
                 .sorted(NAME_COMPARATOR)
@@ -176,11 +178,14 @@ public class StudentDB implements GroupQuery {
                 .filter(s -> s.getGroup().equals(group))
                 .collect(Collectors.groupingBy(Student::getLastName))
                 .entrySet().stream()
+                // :NOTE: ??
                 .map(s -> Map.entry(
                         s.getKey(),
                         s.getValue().stream()
                                 .map(Student::getFirstName)
-                                .min(Comparator.naturalOrder()).orElse("")))
+                                .min(Comparator.naturalOrder())
+                                .orElse("")
+                ))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> x));
     }
 }
