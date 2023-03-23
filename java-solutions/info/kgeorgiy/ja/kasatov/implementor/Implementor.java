@@ -26,7 +26,7 @@ public class Implementor implements Impler {
     public void implement(Class<?> token, Path root) throws ImplerException {
         int modifiers = token.getModifiers();
         if (Modifier.isFinal(modifiers) || token.equals(Enum.class)) {
-            throw new ImplerException("Can't impement final class " + token.getCanonicalName());
+            throw new ImplerException("Can't implement final class " + token.getCanonicalName());
         }
 
         if (Modifier.isPrivate(modifiers)) {
@@ -40,26 +40,12 @@ public class Implementor implements Impler {
         ensureDirectory(filePath);
 
         try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
-            String code = generateCode(token);
-            save(code, filePath);
-            writer.write(code);
+            writer.write(generateCode(token));
         } catch (IOException e) {
             throw new ImplerException(
-                    String.format("Can't write to output file %s: ", filePath.toString()) + e);
+                    String.format("Can't write to output file %s: ", filePath) + e);
         }
 
-    }
-
-    private void save(String text, Path path) throws ImplerException {
-        path = Path.of("SAVED").resolve(path);
-
-        ensureDirectory(path);
-
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            writer.write(text);
-        } catch (IOException e) {
-            throw new ImplerException("");
-        }
     }
 
     private void ensureDirectory(Path path) throws ImplerException {
@@ -74,10 +60,10 @@ public class Implementor implements Impler {
     }
 
     private String generateCode(Class<?> token) throws ImplerException {
-        return String.join(LINE_SEPARATOR,
-                statement("package " + token.getPackageName()),
-                generateClass(token)
-        );
+        return (token.getPackageName().equals("")
+                ? ""
+                : statement("package " + token.getPackageName())
+        ) + generateClass(token);
     }
 
     private String generateClass(Class<?> token) throws ImplerException {
@@ -126,9 +112,6 @@ public class Implementor implements Impler {
 
     private static String curlyBrackets(String str) {
         return "{" + LINE_SEPARATOR + str + "}" + LINE_SEPARATOR;
-    }
-    private static String parenthesis(String str) {
-        return "(" + str + ")";
     }
 
     private String generateMethods(Class<?> token) {
