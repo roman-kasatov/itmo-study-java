@@ -20,11 +20,11 @@ public class Implementor implements Impler {
     private static final String IMPL = "Impl";
     private static final String FILE_SUFFIX = IMPL + ".java";
     private static final String LINE_SEPARATOR = System.lineSeparator();
-    private static final String VOID_BODY = "{}";
+    private static final String VOID_BODY = "{}"; // :NOTE: code format
 
     @Override
-    public void implement(Class<?> token, Path root) throws ImplerException {
-        int modifiers = token.getModifiers();
+    public void implement(final Class<?> token, final Path root) throws ImplerException {
+        final int modifiers = token.getModifiers();
         if (Modifier.isFinal(modifiers) || token.equals(Enum.class)) {
             throw new ImplerException("Can't implement final class " + token.getCanonicalName());
         }
@@ -33,40 +33,41 @@ public class Implementor implements Impler {
             throw new ImplerException("Can't implement private class " + token.getCanonicalName());
         }
 
-        Path filePath = root.resolve(
+        final Path filePath = root.resolve(
                 Path.of(token.getPackageName().replace(".", File.separator),
                         token.getSimpleName() + FILE_SUFFIX)
         );
         ensureDirectory(filePath);
 
-        try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
+        try (final BufferedWriter writer = Files.newBufferedWriter(filePath)) {
             writer.write(generateCode(token));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new ImplerException(
                     String.format("Can't write to output file %s: ", filePath) + e);
         }
 
     }
 
-    private void ensureDirectory(Path path) throws ImplerException {
-        Path root = path.getParent();
+    private static void ensureDirectory(final Path path) throws ImplerException {
+        final Path root = path.getParent();
         if (root != null) {
             try {
                 Files.createDirectories(root);
-            } catch (IOException e) {
+            } catch (final IOException e) {
+                // :NOTE: ??
                 throw new ImplerException("Can't create directory for output file: " + e);
             }
         }
     }
 
-    private String generateCode(Class<?> token) throws ImplerException {
-        return (token.getPackageName().equals("")
+    private String generateCode(final Class<?> token) throws ImplerException {
+        return ("".equals(token.getPackageName())
                 ? ""
                 : statement("package " + token.getPackageName())
         ) + generateClass(token);
     }
 
-    private String generateClass(Class<?> token) throws ImplerException {
+    private String generateClass(final Class<?> token) throws ImplerException {
         return "public class " + token.getSimpleName()  + IMPL +
                 (token.isInterface() ? " implements " : " extends ") + token.getCanonicalName() +
                 curlyBrackets(
@@ -74,19 +75,20 @@ public class Implementor implements Impler {
                 );
     }
 
-    private String generateConstructors(Class<?> token) throws ImplerException {
+    private String generateConstructors(final Class<?> token) throws ImplerException {
         if (token.isInterface()) return "";
-        String constructors = Arrays.stream(token.getDeclaredConstructors())
+        final String constructors = Arrays.stream(token.getDeclaredConstructors())
                 .filter(c -> !Modifier.isPrivate(c.getModifiers()))
                 .map(this::generateConstructor)
                 .collect(Collectors.joining(LINE_SEPARATOR));
+        // :NOTE: too late
         if (constructors.equals("")) {
             throw new ImplerException("No default constructors available in " + token.getCanonicalName());
         }
         return constructors;
     }
 
-    private String generateConstructor(Constructor<?> constructor) {
+    private String generateConstructor(final Constructor<?> constructor) {
         return "public " + constructor.getDeclaringClass().getSimpleName() + IMPL +
             generateParameters(constructor.getParameters()) +
             generateExceptions(constructor.getExceptionTypes()) +
@@ -98,36 +100,36 @@ public class Implementor implements Impler {
             );
     }
 
-    private static String generateExceptions(Class<?>[] exceptions) {
+    private static String generateExceptions(final Class<?>[] exceptions) {
         return exceptions.length == 0 ? "" : Arrays.stream(exceptions)
                 .map(Class::getCanonicalName)
                 .collect(Collectors.joining(", ", "throws ", " "));
     }
 
-    private static String generateParameters(Parameter[] parameters) {
+    private static String generateParameters(final Parameter[] parameters) {
         return Arrays.stream(parameters)
                 .map(p -> p.getType().getCanonicalName() + " " + p.getName())
                 .collect(Collectors.joining(", ", "(", ") "));
     }
 
-    private static String curlyBrackets(String str) {
+    private static String curlyBrackets(final String str) {
         return "{" + LINE_SEPARATOR + str + "}" + LINE_SEPARATOR;
     }
 
-    private String generateMethods(Class<?> token) {
+    private String generateMethods(final Class<?> token) {
         return getAllMethods(token).stream()
                 .map(MethodAsList::toString)
                 .collect(Collectors.joining(LINE_SEPARATOR));
     }
 
-    private static class MethodAsList {
+    private static class MethodAsList { // :NOTE: naming
         String name;
         Parameter[] parameters;
         Class<?>[] exceptions;
         Class<?> returnType;
         int modifiers;
 
-        public MethodAsList(Method method) {
+        public MethodAsList(final Method method) {
             name = method.getName();
             parameters = method.getParameters();
             returnType = method.getReturnType();
@@ -139,6 +141,7 @@ public class Implementor implements Impler {
             return modifiers;
         }
 
+        @Override
         public String toString() {
             return "public " + (returnType == null ? "" : returnType.getCanonicalName() + " ") +
                     name + generateParameters(parameters) +
@@ -147,14 +150,14 @@ public class Implementor implements Impler {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            MethodAsList that = (MethodAsList) o;
+            final MethodAsList that = (MethodAsList) o;
             return Objects.equals(name, that.name) && parametersEquals(that.parameters);
         }
 
-        private boolean parametersEquals(Parameter[] parametersThat) {
+        private boolean parametersEquals(final Parameter[] parametersThat) {
             if (parameters.length != parametersThat.length) return false;
             for (int i = 0; i < parameters.length; i++) {
                 if (parameters[i].getType() != parametersThat[i].getType()) {
@@ -170,11 +173,12 @@ public class Implementor implements Impler {
         }
     }
 
-    private List<MethodAsList> getAllMethods(Class<?> token) {
+    private List<MethodAsList> getAllMethods(final Class<?> token) {
+        // :NOTE: recursion
         return Stream.generate(new Supplier<Stream<MethodAsList>>() {
             Class<?> token;
 
-            public Supplier<Stream<MethodAsList>> init(Class<?> token) {
+            public Supplier<Stream<MethodAsList>> init(final Class<?> token) {
                 this.token = token;
                 return this;
             }
@@ -184,7 +188,7 @@ public class Implementor implements Impler {
                 if (Objects.isNull(token)) {
                     return null;
                 }
-                Stream<MethodAsList> ret = Stream.concat(
+                final Stream<MethodAsList> ret = Stream.concat(
                         Arrays.stream(token.getMethods()),
                         Arrays.stream(token.getDeclaredMethods())
                         ).map(MethodAsList::new);
@@ -199,12 +203,12 @@ public class Implementor implements Impler {
                 .toList();
     }
 
-    private static String statement(String str) {
+    private static String statement(final String str) {
         return str + ";" + LINE_SEPARATOR;
     }
 
-    private static String generateBody(Class<?> returnType) {
-        String value;
+    private static String generateBody(final Class<?> returnType) {
+        final String value;
         if (returnType == null || returnType.equals(void.class)) {
             return VOID_BODY + LINE_SEPARATOR;
         }
