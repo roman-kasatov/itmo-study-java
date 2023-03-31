@@ -283,9 +283,10 @@ public class Implementor implements Impler, JarImpler {
         ensureDirectory(jarFile);
         Path tempPath;
         try {
-            tempPath = Files.createTempDirectory("temp");
+            tempPath = Files.createTempDirectory(jarFile.getParent(), "temp");
+            // tempPath = Files.createTempDirectory(Path.of("."), "temp");
         } catch (SecurityException e) {
-            // Ignore
+            System.out.println("Can't create temporary files due to lack of rights: " + e);
             return;
         } catch (IOException e) {
             System.out.println("Can't create temporary files: " + e);
