@@ -284,6 +284,8 @@ public class Implementor implements Impler, JarImpler {
         Path tempPath;
         try {
             tempPath = Files.createTempDirectory("temp");
+        } catch (SecurityException e) {
+            // Ignore
         } catch (IOException e) {
             System.out.println("Can't create temporary files: " + e);
             return;
