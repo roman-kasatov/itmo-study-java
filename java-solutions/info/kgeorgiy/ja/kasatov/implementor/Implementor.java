@@ -207,7 +207,8 @@ public class Implementor implements Impler, JarImpler {
     /**
      * Generates implementation of constructor.
      * @param constructor target constructor
-     * @return string with correctly formatted (including indentations) trivial implementation of {@code constructor}
+     * @return string with correctly formatted (including indentations) trivial implementation
+     * of {@code constructor}
      */
     private static String generateConstructor(Constructor<?> constructor) {
         return INDENTATION + "public " + constructor.getDeclaringClass().getSimpleName() + IMPL +
@@ -368,14 +369,13 @@ public class Implementor implements Impler, JarImpler {
         if (Objects.isNull(compiler)) {
             throw new ImplerException("Could not find java compiler, include tools.jar to classpath");
         }
-        String[] args;
+        List<String> args = new ArrayList<>(List.of(file, "-encoding", "UTF-8"));
+
         try {
             CodeSource codeSource = token.getProtectionDomain().getCodeSource();
-            if (Objects.isNull(codeSource)) {
-                args = new String[] {file};
-            } else {
-                String classpath = Path.of(codeSource.getLocation().toURI()).toString();
-                args = new String[] {"-cp", classpath, file};
+            if (Objects.nonNull(codeSource)) {
+                args.add("-cp");
+                args.add(Path.of(codeSource.getLocation().toURI()).toString());
             }
         } catch (SecurityException e) {
             throw new ImplerException("Can't get ProtectionDomain to get classpath: " + e);
@@ -383,7 +383,7 @@ public class Implementor implements Impler, JarImpler {
             throw new ImplerException("ProtectionDomain of compiled class has incorrect URL: " + e);
         }
 
-        final int exitCode = compiler.run(null, null, null, args);
+        final int exitCode = compiler.run(null, null, null, args.toArray(String[]::new));
         if (exitCode != 0) {
             throw new ImplerException("Compilation wasn't successful");
         }
