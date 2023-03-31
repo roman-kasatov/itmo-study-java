@@ -274,7 +274,6 @@ public class Implementor implements Impler, JarImpler {
      * @param jarFile target <var>.jar</var> file.
      * @throws ImplerException if can't create temporary file in current working directory,
      * passes exception from {@link #implement(Class, Path)}, if generated code can't be compiled
-     *
      */
     @Override
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
@@ -289,28 +288,31 @@ public class Implementor implements Impler, JarImpler {
             System.out.println("Can't create temporary files: " + e);
             return;
         }
+        try {
+            Implementor implementor = new Implementor();
+            implementor.implement(token, tempPath); // passing ImplerException
 
-        Implementor implementor = new Implementor();
-        implementor.implement(token, tempPath); // passing ImplerException
+            compileFile(token, tempPath.resolve(
+                    Path.of(token.getPackageName().replace(".", File.separator),
+                            token.getSimpleName() + IMPL + SOURCE_FILE_EXTENTION)).toString());
 
-        compileFile(token, tempPath.resolve(
-                Path.of(token.getPackageName().replace(".", File.separator),
-                        token.getSimpleName() + IMPL + SOURCE_FILE_EXTENTION)).toString());
-
-        try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(jarFile), manifest)) {
-            jarOutputStream.putNextEntry(new JarEntry(getInJarPath(token)));
-            try {
-                Files.copy(tempPath.resolve(
-                        Path.of(token.getPackageName().replace(".", File.separator),
-                                token.getSimpleName() + IMPL + ".class")), jarOutputStream);
+            try (JarOutputStream jarOutputStream = new JarOutputStream(Files.newOutputStream(jarFile), manifest)) {
+                jarOutputStream.putNextEntry(new JarEntry(getInJarPath(token)));
+                try {
+                    Files.copy(tempPath.resolve(
+                            Path.of(token.getPackageName().replace(".", File.separator),
+                                    token.getSimpleName() + IMPL + ".class")), jarOutputStream);
+                } catch (IOException e) {
+                    System.out.println("Can't write file into .jar: " + e);
+                } catch (SecurityException e) {
+                    System.out.println("Can't write file into .jar due to lack of rights: " + e);
+                }
+                jarOutputStream.closeEntry();
             } catch (IOException e) {
-                System.out.println("Can't write file into .jar: " + e);
-            } catch (SecurityException e) {
-                System.out.println("Can't write file into .jar due to lack of rights: " + e);
+                System.out.println("Can't open or create target jar file");
             }
-            jarOutputStream.closeEntry();
-        } catch (IOException e) {
-            System.out.println("Can't open or create target jar file");
+        } catch (ImplerException e) {
+            throw e; // passing exception from implement and compileFile
         } finally {
             try {
                 deleteFolder(tempPath);
@@ -329,7 +331,7 @@ public class Implementor implements Impler, JarImpler {
      * @throws SecurityException passed from {@link Files#walk(Path, FileVisitOption...)}
      * or if this exception occurs in {@link File#delete()} for temporary file
      */
-    private static void deleteFolder(Path path) throws IOException, SecurityException{
+    private static void deleteFolder(Path path) throws IOException, SecurityException {
         try (Stream<Path> walk = Files.walk(path)) {
             walk.sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
@@ -357,7 +359,7 @@ public class Implementor implements Impler, JarImpler {
      * in {@link Class#getProtectionDomain()} for {@code token} or if {@link CodeSource#getLocation()}
      * can't be parsed to URI for {@code token} or if {@link JavaCompiler} returned bad exitCode
      */
-    public static void compileFile(Class<?> token, final String file) throws ImplerException{
+    public static void compileFile(Class<?> token, final String file) throws ImplerException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (Objects.isNull(compiler)) {
             throw new ImplerException("Could not find java compiler, include tools.jar to classpath");
@@ -441,7 +443,7 @@ public class Implementor implements Impler, JarImpler {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, returnType);
+            return Objects.hash(name);
         }
     }
 
@@ -463,16 +465,15 @@ public class Implementor implements Impler, JarImpler {
                 if (Modifier.isPrivate(method.getModifiers())) {
                     return;
                 }
-                MethodImprint methodAsList = new MethodImprint(method);
-                if (Modifier.isAbstract(method.getModifiers())) {
-                    abstractMethods.add(methodAsList);
+                MethodImprint methodImprint = new MethodImprint(method);
+                if (Modifier.isAbstract(method.getModifiers()) && !implementedMethods.contains(methodImprint)) {
+                    abstractMethods.add(methodImprint);
                 } else {
-                    implementedMethods.add(methodAsList);
+                    implementedMethods.add(methodImprint);
                 }
             });
             token = token.getSuperclass();
         }
-        abstractMethods.removeAll(implementedMethods);
         return abstractMethods;
     }
 

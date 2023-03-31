@@ -1,1 +1,1 @@
-typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"info.kgeorgiy.ja.kasatov.implementor","l":"Implementor"},{"p":"info.kgeorgiy.ja.kasatov.implementor","l":"Implementor.MethodImprint"}];updateSearchResults();
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"info.kgeorgiy.ja.kasatov.implementor","l":"Implementor"},{"p":"info.kgeorgiy.java.advanced.implementor","l":"ImplerException"},{"p":"info.kgeorgiy.ja.kasatov.implementor","l":"Implementor.MethodImprint"}];updateSearchResults();
