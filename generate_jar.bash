@@ -12,6 +12,7 @@
 readonly COMPILED_PATH=./compiled
 readonly JAR_FILE=./implementor.jar
 readonly MAIN_CLASS=info.kgeorgiy.ja.kasatov.implementor.Implementor
+readonly TESTS=./../java-advanced-2023
 
 # TODO: don't compile all tests
 
@@ -20,17 +21,17 @@ rm -rf $COMPILED_PATH
 
 # add libraries: hamcrest-core, jsoup, junit, quickcheck
 # for (kgeorgiy) implementor and base modules
-cp -r ./java-advanced-2023/lib $COMPILED_PATH
+cp -r $TESTS/lib $COMPILED_PATH
 
 # compile package base
 javac -d $COMPILED_PATH/info.kgeorgiy.java.advanced.base \
     --module-path $COMPILED_PATH \
-    $(find ./java-advanced-2023/modules/info.kgeorgiy.java.advanced.base -name "*.java")
+    $(find $TESTS/modules/info.kgeorgiy.java.advanced.base -name "*.java")
 
 # compile package (kgeorgiy) implementor
 javac -d $COMPILED_PATH/info.kgeorgiy.java.advanced.implementor \
     --module-path $COMPILED_PATH \
-    $(find ./java-advanced-2023/modules/info.kgeorgiy.java.advanced.implementor -name "*.java")
+    $(find $TESTS/modules/info.kgeorgiy.java.advanced.implementor -name "*.java")
 
 # compile Implementor.java
 javac -d $COMPILED_PATH/java.solutions --module-path $COMPILED_PATH \
