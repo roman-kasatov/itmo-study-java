@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import info.kgeorgiy.java.advanced.concurrent.ListIP;
 
@@ -48,7 +49,7 @@ public class IterativeParallelism implements ListIP {
         for (int i = 0; i < threads; i++) {
             int finalI = i;
             Thread thread = new Thread(() ->
-                results.set(finalI, function.apply(splittedList.get(finalI)))
+                    results.set(finalI, function.apply(splittedList.get(finalI)))
             );
             threadsList.add(thread);
             thread.start();
@@ -122,8 +123,8 @@ public class IterativeParallelism implements ListIP {
         return applyInParallel(
                 threads,
                 values,
-                list -> list.stream().filter(predicate),
-                list -> list.stream().flatMap(Function.identity())
+                list -> list.stream().filter(predicate).toList(),
+                list -> list.stream().flatMap(List::stream)
                         .collect(Collectors.toCollection(ArrayList<T>::new))
         );
     }
@@ -133,8 +134,8 @@ public class IterativeParallelism implements ListIP {
         return applyInParallel(
                 threads,
                 values,
-                list -> list.stream().map(f),
-                list -> list.stream().flatMap(Function.identity())
+                list -> list.stream().map(f).toList(),
+                list -> list.stream().flatMap(List::stream)
                         .collect(Collectors.toCollection(ArrayList<U>::new))
         );
     }
