@@ -62,6 +62,7 @@ public class IterativeParallelism implements ListIP {
             for (Thread t : threadsList) {
                 t.interrupt();
             }
+            // :NOTE: не дожидаешься завершения созданных потоков
             throw new InterruptedException("One of threads was interrupted " +
                     "while applying function in parallel: " + e);
         }
