@@ -53,8 +53,16 @@ public class IterativeParallelism implements ListIP {
             threadsList.add(thread);
             thread.start();
         }
-        for (Thread t : threadsList) {
-            t.join();
+        try {
+            for (Thread t : threadsList) {
+                t.join();
+            }
+        } catch (InterruptedException e) {
+            for (Thread t : threadsList) {
+                t.interrupt();
+            }
+            throw new InterruptedException("One of threads was interrupted " +
+                    "while applying function in parallel: " + e);
         }
         return mergeFunction.apply(results);
     }
