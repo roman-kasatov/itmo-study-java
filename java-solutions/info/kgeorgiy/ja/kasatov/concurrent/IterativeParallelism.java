@@ -8,8 +8,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import info.kgeorgiy.java.advanced.concurrent.ListIP;
+import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
 public class IterativeParallelism implements ListIP {
+
+    private ParallelMapper mapper = null;
+
+    public IterativeParallelism() {
+    }
+    public IterativeParallelism(ParallelMapper mapper) {
+        this.mapper = mapper;
+    }
 
     /**
      * Split a {@code list}.
@@ -43,34 +52,41 @@ public class IterativeParallelism implements ListIP {
             Function<List<? extends T>, U> function,
             Function<List<U>, R> mergeFunction
     ) throws InterruptedException {
+
         List<List<? extends T>> splittedList = splitToLists(threads, list);
-        List<U> results = new ArrayList<>(Collections.nCopies(threads, null));
-        List<Thread> threadsList = new ArrayList<>();
-        for (int i = 0; i < threads; i++) {
-            int finalI = i;
-            Thread thread = new Thread(() ->
-                    results.set(finalI, function.apply(splittedList.get(finalI)))
-            );
-            threadsList.add(thread);
-            thread.start();
-        }
-        InterruptedException exception = null;
-        for (Thread t : threadsList) {
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                if (Objects.nonNull(exception)) {
-                    exception.addSuppressed(e);
-                } else {
-                    threadsList.forEach(Thread::interrupt);
-                    exception = e;
+        List<U> results;
+
+        if (this.mapper == null) {
+            results = new ArrayList<>(Collections.nCopies(threads, null));
+            List<Thread> threadsList = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                int finalI = i;
+                Thread thread = new Thread(() ->
+                        results.set(finalI, function.apply(splittedList.get(finalI)))
+                );
+                threadsList.add(thread);
+                thread.start();
+            }
+            InterruptedException exception = null;
+            for (Thread t : threadsList) {
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    if (Objects.nonNull(exception)) {
+                        exception.addSuppressed(e);
+                    } else {
+                        threadsList.forEach(Thread::interrupt);
+                        exception = e;
+                    }
                 }
             }
+            if (Objects.nonNull(exception)) {
+                throw exception;
+            }
+        } else {
+            // pass InterruptedException
+            results = mapper.map(function, splittedList);
         }
-        if (Objects.nonNull(exception)) {
-            throw exception;
-        }
-
         return mergeFunction.apply(results);
     }
 
