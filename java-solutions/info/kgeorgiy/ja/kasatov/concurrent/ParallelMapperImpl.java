@@ -11,21 +11,44 @@ import java.util.function.Function;
 
 public class ParallelMapperImpl implements ParallelMapper {
     private final List<Thread> threads = new ArrayList<>();
-    private final Queue<Runnable> tasks = new ArrayDeque<>();
+    private final TaskQueue tasks = new TaskQueue();
 
-    private static class ListWithCounter<T> extends ArrayList<T> {
-        private int counter = 0;
+    private static class TaskQueue {
+        private final Queue<Runnable> queue = new ArrayDeque<>();
 
-        public synchronized int getCounter() {
-            return this.counter;
+        public synchronized void add(Runnable runnable) {
+            queue.add(runnable);
+            notify();
         }
 
-        @Override
-        public synchronized T set(int index, T element) {
-            // :NOTE: тред просыпается много лишних раз
-            this.notifyAll();
-            this.counter++;
-            return super.set(index, element);
+        public synchronized Runnable get() throws InterruptedException{
+            while (queue.isEmpty()) {
+                wait();
+            }
+            return queue.poll();
+        }
+    }
+
+    private static class WaitingList<T> {
+        private int counter = 0;
+        private final List<T> list;
+
+        public WaitingList(int size) {
+            this.list = new ArrayList<>(Collections.nCopies(size, null));
+        }
+
+        public synchronized void set(int index, T element) {
+            list.set(index, element);
+            if (++counter >= list.size()) {
+                notify();
+            }
+        }
+
+        public synchronized List<T> waitForFilling() throws InterruptedException{
+            while (counter < list.size()) {
+                wait();
+            }
+            return list;
         }
     }
 
@@ -37,26 +60,16 @@ public class ParallelMapperImpl implements ParallelMapper {
         }
     }
 
-    private record Worker(Queue<Runnable> tasks) implements Runnable {
+    private record Worker(TaskQueue tasks) implements Runnable {
 
         @Override
         public void run() {
             try {
                 while (!Thread.interrupted()) {
-                    Runnable task;
-                    // логику по работе с очередью можно объединить в один класс
-                    synchronized (tasks) {
-                        while (tasks.isEmpty()) {
-                            tasks.wait();
-                        }
-                        task = tasks.poll();
-                        // :NOTE: нотифай здесь не нужен
-                        tasks.notifyAll();
-                    }
-                    task.run();
+                    tasks.get().run(); // throws InterruptedException
                 }
             } catch (InterruptedException e) {
-                // ???
+                // Worker was interrupted
             }
         }
     }
@@ -64,25 +77,12 @@ public class ParallelMapperImpl implements ParallelMapper {
 
     @Override
     public <T, R> List<R> map(Function<? super T, ? extends R> f, List<? extends T> args) throws InterruptedException {
-        ListWithCounter<R> result = new ListWithCounter<>();
-        // :NOTE: Collections.nCopies
+        WaitingList<R> result = new WaitingList<>(args.size());
         for (int i = 0; i < args.size(); i++) {
-            result.add(null);
+            int finalI = i;
+            tasks.add(() -> result.set(finalI, f.apply(args.get(finalI))));
         }
-        synchronized (tasks) {
-            for (int i = 0; i < args.size(); i++) {
-                int finalI = i;
-                tasks.add(() -> result.set(finalI, f.apply(args.get(finalI))));
-            }
-            tasks.notifyAll();
-        }
-        // :NOTE: лишняя синхронизация? можно вынести в сам каунтер
-        synchronized (result) {
-            while (result.getCounter() < args.size()) {
-                result.wait();
-            }
-        }
-        return result;
+        return result.waitForFilling();
     }
 
     @Override
