@@ -56,15 +56,13 @@ public class IterativeParallelism implements ListIP {
         }
         InterruptedException exception = null;
         for (Thread t : threadsList) {
-            if (Objects.nonNull(exception)) {
-                t.interrupt();
-            }
             try {
                 t.join();
             } catch (InterruptedException e) {
                 if (Objects.nonNull(exception)) {
                     exception.addSuppressed(e);
                 } else {
+                    threadsList.forEach(Thread::interrupt);
                     exception = e;
                 }
             }
