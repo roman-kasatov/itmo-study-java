@@ -8,7 +8,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class WebCrawler implements Crawler {
-
     private final int perHost;
     private final Downloader downloader;
     private final ExecutorService extractors;
@@ -16,13 +15,14 @@ public class WebCrawler implements Crawler {
     private final Map<String, Host> hosts = new ConcurrentHashMap<>();
 
 
-    private enum DEFAULT_ARGUMENTS {
+    private enum DefaultArguments {
         DEPTH(1),
         DOWNLOADS(10),
         EXTRACTORS(10),
         PER_HOST(10);
         public final int value;
-        DEFAULT_ARGUMENTS(int value) {
+
+        DefaultArguments(int value) {
             this.value = value;
         }
     }
@@ -40,6 +40,7 @@ public class WebCrawler implements Crawler {
                 taskQueue.add(task);
             }
         }
+
         public synchronized void endTask() {
             load--;
             if (load < perHost && !taskQueue.isEmpty()) {
@@ -77,6 +78,7 @@ public class WebCrawler implements Crawler {
                 }
             });
         }
+
         private void addDownloadTask(String url, Queue<String> nextDepthQueue, boolean goDeeper) {
             try {
                 Host host = hosts.computeIfAbsent(URLUtils.getHost(url), s -> new Host());
@@ -104,13 +106,13 @@ public class WebCrawler implements Crawler {
                 String url,
                 int depth
         ) {
-
+            // :NOTE: можно просто ArrayList
             final Queue<String> currentDepthQueue = new ConcurrentLinkedQueue<>();
             final Queue<String> nextDepthQueue = new ConcurrentLinkedQueue<>();
             currentDepthQueue.add(url);
             visited.add(url);
 
-            for (int curDepth = depth; curDepth > 0; curDepth--){
+            for (int curDepth = depth; curDepth > 0; curDepth--) {
                 for (final String currentUrl : currentDepthQueue) {
                     addDownloadTask(currentUrl, nextDepthQueue, curDepth > 1);
                 }
@@ -124,7 +126,7 @@ public class WebCrawler implements Crawler {
         }
     }
 
-    private static int parseArgument(String[] args, int nmb, DEFAULT_ARGUMENTS defaultEnumElement) {
+    private static int parseArgument(String[] args, int nmb, DefaultArguments defaultEnumElement) {
         return args.length > nmb
                 ? Integer.parseInt(args[nmb])
                 : defaultEnumElement.value;
@@ -132,13 +134,14 @@ public class WebCrawler implements Crawler {
 
     /**
      * Creates new WebCrawler and downloads by url with arguments.
+     *
      * @param args arguments for {@link WebCrawler#WebCrawler(Downloader, int, int, int)}
      *             and {@link WebCrawler#download(String, int)} in following format
      *             [depth [downloads [extractors [perHost]]]] where default values are: <br>
-     *             depth: {@link DEFAULT_ARGUMENTS#DEPTH} <br>
-     *             downloads: {@link DEFAULT_ARGUMENTS#DOWNLOADS} <br>
-     *             extractors: {@link DEFAULT_ARGUMENTS#EXTRACTORS} <br>
-     *             perHost: {@link DEFAULT_ARGUMENTS#PER_HOST}.
+     *             depth: {@link DefaultArguments#DEPTH} <br>
+     *             downloads: {@link DefaultArguments#DOWNLOADS} <br>
+     *             extractors: {@link DefaultArguments#EXTRACTORS} <br>
+     *             perHost: {@link DefaultArguments#PER_HOST}.
      */
     public static void main(String[] args) {
         if (args.length < 1) {
@@ -146,13 +149,13 @@ public class WebCrawler implements Crawler {
         }
         try (WebCrawler crawler = new WebCrawler(
                 new CachingDownloader(0),
-                parseArgument(args, 2, DEFAULT_ARGUMENTS.DOWNLOADS),
-                parseArgument(args, 3, DEFAULT_ARGUMENTS.EXTRACTORS),
-                parseArgument(args, 4, DEFAULT_ARGUMENTS.PER_HOST)
+                parseArgument(args, 2, DefaultArguments.DOWNLOADS),
+                parseArgument(args, 3, DefaultArguments.EXTRACTORS),
+                parseArgument(args, 4, DefaultArguments.PER_HOST)
         )) {
             crawler.download(
                     args[0],
-                    parseArgument(args, 1, DEFAULT_ARGUMENTS.DEPTH)
+                    parseArgument(args, 1, DefaultArguments.DEPTH)
             );
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -161,10 +164,11 @@ public class WebCrawler implements Crawler {
 
     /**
      * Creates new WebCrawler with downloaders and extractors pools aka {@link ExecutorService}.
-     * @param downloader could be used from different threads.
+     *
+     * @param downloader  could be used from different threads.
      * @param downloaders max amount of threads for simultaneous download.
-     * @param extractors max amount of threads for simultaneous extraction.
-     * @param perHost restriction on connections for one host.
+     * @param extractors  max amount of threads for simultaneous extraction.
+     * @param perHost     restriction on connections for one host.
      */
     public WebCrawler(Downloader downloader, int downloaders, int extractors, int perHost) {
         this.downloader = downloader;
@@ -183,13 +187,14 @@ public class WebCrawler implements Crawler {
         downloaders.shutdownNow();
         extractors.shutdownNow();
         try {
-            if ( !downloaders.awaitTermination(1000, TimeUnit.MILLISECONDS) ||
-                    !extractors.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
+            // :NOTE: 500 дней
+            if (!downloaders.awaitTermination(1000, TimeUnit.MILLISECONDS) ||
+                !extractors.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
                 System.err.println("ExecutorService's thread pool wasn't terminated");
             }
         } catch (InterruptedException e) {
             System.err.println("Was interrupted while waiting for " +
-                    "ExecutorService to terminate");
+                               "ExecutorService to terminate");
         }
     }
 }
