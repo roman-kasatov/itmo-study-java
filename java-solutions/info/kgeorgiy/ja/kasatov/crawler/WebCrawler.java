@@ -130,6 +130,16 @@ public class WebCrawler implements Crawler {
                 : defaultEnumElement.value;
     }
 
+    /**
+     * Creates new WebCrawler and downloads by url with arguments.
+     * @param args arguments for {@link WebCrawler#WebCrawler(Downloader, int, int, int)}
+     *             and {@link WebCrawler#download(String, int)} in following format
+     *             [depth [downloads [extractors [perHost]]]] where default values are: <br>
+     *             depth: {@link DEFAULT_ARGUMENTS#DEPTH} <br>
+     *             downloads: {@link DEFAULT_ARGUMENTS#DOWNLOADS} <br>
+     *             extractors: {@link DEFAULT_ARGUMENTS#EXTRACTORS} <br>
+     *             perHost: {@link DEFAULT_ARGUMENTS#PER_HOST}
+     */
     public static void main(String[] args) {
         if (args.length < 1) {
             throw new IllegalArgumentException("URL expected");
