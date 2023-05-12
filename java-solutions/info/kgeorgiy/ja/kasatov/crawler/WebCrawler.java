@@ -138,7 +138,7 @@ public class WebCrawler implements Crawler {
      *             depth: {@link DEFAULT_ARGUMENTS#DEPTH} <br>
      *             downloads: {@link DEFAULT_ARGUMENTS#DOWNLOADS} <br>
      *             extractors: {@link DEFAULT_ARGUMENTS#EXTRACTORS} <br>
-     *             perHost: {@link DEFAULT_ARGUMENTS#PER_HOST}
+     *             perHost: {@link DEFAULT_ARGUMENTS#PER_HOST}.
      */
     public static void main(String[] args) {
         if (args.length < 1) {
@@ -159,6 +159,13 @@ public class WebCrawler implements Crawler {
         }
     }
 
+    /**
+     * Creates new WebCrawler with downloaders and extractors pools aka {@link ExecutorService}.
+     * @param downloader could be used from different threads.
+     * @param downloaders max amount of threads for simultaneous download.
+     * @param extractors max amount of threads for simultaneous extraction.
+     * @param perHost restriction on connections for one host.
+     */
     public WebCrawler(Downloader downloader, int downloaders, int extractors, int perHost) {
         this.downloader = downloader;
         this.downloaders = Executors.newFixedThreadPool(downloaders);
