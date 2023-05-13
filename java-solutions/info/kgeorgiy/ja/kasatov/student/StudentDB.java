@@ -180,7 +180,7 @@ public class StudentDB implements GroupQuery {
                 .entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry ->tuna.cmd ht Dudko_Evgeniia student entry.getValue().stream()
+                        entry -> entry.getValue().stream()
                                 .map(Student::getFirstName)
                                 .min(Comparator.naturalOrder())
                                 .orElse("")
