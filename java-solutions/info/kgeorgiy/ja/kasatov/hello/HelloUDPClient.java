@@ -9,6 +9,8 @@ import java.util.concurrent.*;
 
 public class HelloUDPClient implements HelloClient {
 
+    private static final int SOCKET_TIMEOUT = 100;
+
     @Override
     public void run(String host, int port, String prefix, int threads, int requests) {
         SocketAddress serverAddres;
@@ -27,7 +29,9 @@ public class HelloUDPClient implements HelloClient {
 
         try {
             threadsPool.shutdown();
-            threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+            if (!threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
+                System.err.println("Client threads weren't terminated correctly");
+            }
         } catch (InterruptedException e) {
             System.err.println("Client threads was interrupted");
         }
@@ -72,7 +76,7 @@ public class HelloUDPClient implements HelloClient {
             packet.setData(new byte[BUFF_SIZE]);
             try {
                 socket.receive(packet);
-            } catch (IOException e) {
+            } catch (IOException e) { // includes SocketTimeoutException
                 // waiting for answer
                 return false;
             }
@@ -93,7 +97,7 @@ public class HelloUDPClient implements HelloClient {
         public void run() {
             try (DatagramSocket socket = new DatagramSocket()) {
                 BUFF_SIZE = socket.getReceiveBufferSize();
-                socket.setSoTimeout(100);
+                socket.setSoTimeout(SOCKET_TIMEOUT);
                 for (requestNmb = 0; requestNmb < requests; requestNmb++) {
                     while (!makeRequest(socket)) {
                     }

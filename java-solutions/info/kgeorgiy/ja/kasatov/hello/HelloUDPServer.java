@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class HelloUDPServer implements HelloServer {
+    private static final int SOCKET_TIMEOUT = 100;
     private ExecutorService threadsPool;
     private DatagramSocket socket;
     Thread mainThread;
@@ -21,7 +22,6 @@ public class HelloUDPServer implements HelloServer {
     }
 
     private class MainThread implements Runnable {
-        private static final int BUFF_SIZE = 128;
         private final int port;
         public MainThread(int port) {
             this.port = port;
@@ -31,14 +31,18 @@ public class HelloUDPServer implements HelloServer {
         public void run() {
             try {
                 socket = new DatagramSocket(port);
-                socket.setSoTimeout(100);
+                socket.setSoTimeout(SOCKET_TIMEOUT);
                 while (!Thread.interrupted()) {
-                    DatagramPacket packet = new DatagramPacket(new byte[BUFF_SIZE], BUFF_SIZE);
+                    byte[] buff = new byte[socket.getReceiveBufferSize()];
+                    DatagramPacket packet = new DatagramPacket(buff, buff.length);
                     try {
                         socket.receive(packet);
                         threadsPool.submit(() -> answer(packet));
-                    } catch (IOException e) {
+                    } catch (SocketTimeoutException e) {
                         // Waiting for clients
+                    } catch (IOException e) {
+                        System.err.println("Exception occurred while receiving datagram from client: "
+                                + e.getMessage());
                     }
                 }
                 Thread.currentThread().interrupt();
@@ -69,7 +73,7 @@ public class HelloUDPServer implements HelloServer {
         }
         threadsPool.shutdownNow();
         try {
-            if ( !threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
+            if (!threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
                 System.err.println("Server subthreads pool wasn't terminated");
             }
         } catch (InterruptedException e) {
