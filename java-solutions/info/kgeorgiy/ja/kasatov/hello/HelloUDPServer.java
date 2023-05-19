@@ -27,6 +27,7 @@ public class HelloUDPServer implements HelloServer {
             return;
         }
         try (HelloUDPServer server = new HelloUDPServer()) {
+            // :NOTE: не ловится NumberFormatException, хотим ловить + вынести метод в Utils
             server.start(
                     Integer.parseInt(args[0]),
                     Integer.parseInt(args[1])
