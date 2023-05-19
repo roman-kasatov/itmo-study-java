@@ -5,17 +5,42 @@ import info.kgeorgiy.java.advanced.hello.HelloClient;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 public class HelloUDPClient implements HelloClient {
 
     private static final int SOCKET_TIMEOUT = 100;
 
+    /**
+     * Runs {@link HelloUDPClient#run(String, int, String, int, int)} with arguments.
+     * @param args must contain: <br>
+     *             имя или ip-адрес компьютера, на котором запущен сервер; <br>
+     *             номер порта, на который отсылать запросы; <br>
+     *             префикс запросов (строка); <br>
+     *             число параллельных потоков запросов; <br>
+     *             число запросов в каждом потоке.
+     */
+    public static void main(String[] args) {
+        if (args == null || Arrays.stream(args).anyMatch(Objects::isNull) || args.length != 5) {
+            System.err.println("Incorrect arguments");
+            return;
+        }
+        new HelloUDPClient().run(
+                args[0],
+                Integer.parseInt(args[1]),
+                args[2],
+                Integer.parseInt(args[3]),
+                Integer.parseInt(args[4])
+        );
+    }
+
     @Override
     public void run(String host, int port, String prefix, int threads, int requests) {
-        SocketAddress serverAddres;
+        SocketAddress serverAddress;
         try {
-            serverAddres = new InetSocketAddress(InetAddress.getByName(host), port);
+            serverAddress = new InetSocketAddress(InetAddress.getByName(host), port);
         } catch (UnknownHostException e) {
             System.err.println("Can't resolve host: " + e.getMessage());
             return;
@@ -24,17 +49,10 @@ public class HelloUDPClient implements HelloClient {
         ExecutorService threadsPool = Executors.newFixedThreadPool(threads);
 
         for (int threadNmb = 0; threadNmb < threads; threadNmb++) {
-            threadsPool.submit(new ClientThread(threadNmb, requests, serverAddres, prefix));
+            threadsPool.submit(new ClientThread(threadNmb, requests, serverAddress, prefix));
         }
 
-        try {
-            threadsPool.shutdown();
-            if (!threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
-                System.err.println("Client threads weren't terminated correctly");
-            }
-        } catch (InterruptedException e) {
-            System.err.println("Client threads was interrupted: " + e.getMessage());
-        }
+        MyUDPUtils.closeThreadPool(threadsPool, "Client");
     }
 
     private static class ClientThread implements Runnable {
@@ -67,10 +85,7 @@ public class HelloUDPClient implements HelloClient {
             byte[] bytes = request.getBytes();
             DatagramPacket packet = new DatagramPacket(bytes, bytes.length, serverAddress);
             System.out.println(request);
-            try {
-                socket.send(packet);
-            } catch (IOException e) {
-                System.err.println("Can't send request to server: " + e.getMessage());
+           if (!MyUDPUtils.sendPacket(socket, packet, "Client")) {
                 return false;
             }
             packet.setData(new byte[BUFF_SIZE]);

@@ -4,15 +4,35 @@ import info.kgeorgiy.java.advanced.hello.HelloServer;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class HelloUDPServer implements HelloServer {
     private static final int SOCKET_TIMEOUT = 100;
     private ExecutorService threadsPool;
     private DatagramSocket socket;
     private Thread mainThread;
+
+    /**
+     * Runs {@link HelloUDPServer#start(int, int)} with arguments.
+     * @param args must contain: <br>
+     *              номер порта, по которому будут приниматься запросы; <br>
+     *              число рабочих потоков, которые будут обрабатывать запросы.
+     */
+    public static void main(String[] args) {
+        if (args == null || Arrays.stream(args).anyMatch(Objects::isNull) || args.length != 2) {
+            System.err.println("Incorrect arguments");
+            return;
+        }
+        try (HelloUDPServer server = new HelloUDPServer()) {
+            server.start(
+                    Integer.parseInt(args[0]),
+                    Integer.parseInt(args[1])
+            );
+        }
+    }
 
     @Override
     public void start(int port, int threads) {
@@ -53,14 +73,10 @@ public class HelloUDPServer implements HelloServer {
     }
 
     private void answer(DatagramPacket packet) {
-        try {
-            String request = new String(packet.getData(), 0, packet.getLength());
-            String answer = "Hello, " + request;
-            packet.setData(answer.getBytes());
-            socket.send(packet);
-        } catch (IOException e) {
-            System.err.println("Can't send answer to client: " + e.getMessage());
-        }
+        String request = new String(packet.getData(), packet.getOffset(), packet.getLength());
+        String answer = "Hello, " + request;
+        packet.setData(answer.getBytes());
+        MyUDPUtils.sendPacket(socket, packet, "Server");
     }
 
     @Override
@@ -72,13 +88,7 @@ public class HelloUDPServer implements HelloServer {
             System.err.println("Server main thread wasn't terminated correctly: " + e.getMessage());
         }
         threadsPool.shutdownNow();
-        try {
-            if (!threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
-                System.err.println("Server subthreads pool wasn't terminated");
-            }
-        } catch (InterruptedException e) {
-            System.err.println("Server subthreads weren't awaited: " + e.getMessage());
-        }
+        MyUDPUtils.closeThreadPool(threadsPool, "Server");
         socket.close();
     }
 }
