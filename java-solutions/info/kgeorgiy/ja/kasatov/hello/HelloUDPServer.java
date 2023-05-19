@@ -12,7 +12,7 @@ public class HelloUDPServer implements HelloServer {
     private static final int SOCKET_TIMEOUT = 100;
     private ExecutorService threadsPool;
     private DatagramSocket socket;
-    Thread mainThread;
+    private Thread mainThread;
 
     @Override
     public void start(int port, int threads) {
