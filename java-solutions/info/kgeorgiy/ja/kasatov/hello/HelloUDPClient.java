@@ -33,11 +33,11 @@ public class HelloUDPClient implements HelloClient {
                 System.err.println("Client threads weren't terminated correctly");
             }
         } catch (InterruptedException e) {
-            System.err.println("Client threads was interrupted");
+            System.err.println("Client threads was interrupted: " + e.getMessage());
         }
     }
 
-    private class ClientThread implements Runnable {
+    private static class ClientThread implements Runnable {
 
         private final int threadNmb;
         private final int requests;
@@ -100,6 +100,7 @@ public class HelloUDPClient implements HelloClient {
                 socket.setSoTimeout(SOCKET_TIMEOUT);
                 for (requestNmb = 0; requestNmb < requests; requestNmb++) {
                     while (!makeRequest(socket)) {
+                        // Continue making requests
                     }
                 }
 

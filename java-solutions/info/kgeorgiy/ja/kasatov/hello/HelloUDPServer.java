@@ -47,7 +47,7 @@ public class HelloUDPServer implements HelloServer {
                 }
                 Thread.currentThread().interrupt();
             } catch (SocketException e) {
-                System.err.println("Can't configure socket on server");
+                System.err.println("Can't configure socket on server: " + e.getMessage());
             }
         }
     }
@@ -59,7 +59,7 @@ public class HelloUDPServer implements HelloServer {
             packet.setData(answer.getBytes());
             socket.send(packet);
         } catch (IOException e) {
-            System.err.println("Can't send answer to client");
+            System.err.println("Can't send answer to client: " + e.getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ public class HelloUDPServer implements HelloServer {
         try {
             mainThread.join();
         } catch (InterruptedException e) {
-            System.err.println("Server main thread wasn't terminated correctly");
+            System.err.println("Server main thread wasn't terminated correctly: " + e.getMessage());
         }
         threadsPool.shutdownNow();
         try {
@@ -77,7 +77,7 @@ public class HelloUDPServer implements HelloServer {
                 System.err.println("Server subthreads pool wasn't terminated");
             }
         } catch (InterruptedException e) {
-            System.err.println("Server subthreads weren't awaited");
+            System.err.println("Server subthreads weren't awaited: " + e.getMessage());
         }
         socket.close();
     }
