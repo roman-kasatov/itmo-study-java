@@ -9,15 +9,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class HelloUDPServer implements HelloServer {
-    private int port;
-    private int maxThreads;
     private ExecutorService threadsPool;
     private DatagramSocket socket;
     Thread mainThread;
 
     @Override
     public void start(int port, int threads) {
-        this.port = port;
         this.threadsPool = Executors.newFixedThreadPool(threads);
         mainThread = new Thread(new MainThread(port));
         mainThread.start();
@@ -46,7 +43,7 @@ public class HelloUDPServer implements HelloServer {
                 }
                 Thread.currentThread().interrupt();
             } catch (SocketException e) {
-                // TODO
+                System.err.println("Can't configure socket on server");
             }
         }
     }
@@ -58,13 +55,18 @@ public class HelloUDPServer implements HelloServer {
             packet.setData(answer.getBytes());
             socket.send(packet);
         } catch (IOException e) {
-            // TODO
+            System.err.println("Can't send answer to client");
         }
     }
 
     @Override
     public void close() {
         mainThread.interrupt();
+        try {
+            mainThread.join();
+        } catch (InterruptedException e) {
+            System.err.println("Server main thread wasn't terminated correctly");
+        }
         threadsPool.shutdownNow();
         try {
             if ( !threadsPool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS)) {
@@ -72,11 +74,6 @@ public class HelloUDPServer implements HelloServer {
             }
         } catch (InterruptedException e) {
             System.err.println("Server subthreads weren't awaited");
-        }
-        try {
-            mainThread.join();
-        } catch (InterruptedException e) {
-            System.err.println("Server main thread wasn't terminated correctly");
         }
         socket.close();
     }
